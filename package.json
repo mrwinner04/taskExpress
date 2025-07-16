@@ -10,7 +10,15 @@
     "dev": "ts-node src/index.ts",
     "dev:watch": "nodemon --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all",
+    "db:seed:custom": "node src/seeders/run-all-seeds.js",
+    "db:reset": "npm run db:migrate:undo:all && npm run db:migrate && npm run db:seed:custom",
+    "db:fresh": "npm run db:migrate:undo:all && npm run db:migrate && npm run db:seed:custom"
   },
   "keywords": [
     "nodejs",
@@ -27,16 +35,22 @@
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
-    "express": "^5.1.0"
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.13",
+    "@types/pg": "^8.15.4",
     "eslint": "^9.31.0",
     "eslint-plugin-perfectionist": "^4.15.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
+    "sequelize-cli": "^6.6.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.36.0"
