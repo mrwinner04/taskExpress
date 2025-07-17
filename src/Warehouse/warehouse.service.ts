@@ -1,5 +1,5 @@
 import { Warehouse, WarehouseAttributes } from "../config/associations";
-import { ProductType } from "../Products/product.model";
+import { ProductType } from "../product/product.model";
 
 class WarehouseService {
   async getAllWarehousesPerCompany(companyId: string): Promise<Warehouse[]> {

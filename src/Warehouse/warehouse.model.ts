@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/database";
-import { ProductType } from "../Products/product.model";
+import { ProductType } from "../product/product.model";
 
 export interface WarehouseAttributes {
   id: string;

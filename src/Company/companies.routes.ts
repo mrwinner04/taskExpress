@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import CompanyService from "./company.service";
-import { ValidationUtils, ValidationField } from "../Utils/ValidationUtils";
+import { ValidationUtils } from "../utility/ValidationUtils";
 
 const router = Router();
 

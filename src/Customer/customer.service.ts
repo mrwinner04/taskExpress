@@ -3,6 +3,17 @@ import {
   CustomerAttributes,
   CustomerType,
 } from "../config/associations";
+import { QueryTypes } from "sequelize";
+import sequelize from "../config/database";
+
+interface CustomerWithMostOrders {
+  id: string;
+  name: string;
+  email: string;
+  type: string;
+  totalOrders: number;
+  totalOrderValue: number;
+}
 
 class CustomerService {
   async getAllCustomersPerCompany(companyId: string): Promise<Customer[]> {
@@ -83,6 +94,47 @@ class CustomerService {
         deletedAt: null,
       },
     });
+  }
+
+  async getCustomersWithMostOrders(
+    companyId?: string,
+    limit: number = 10
+  ): Promise<CustomerWithMostOrders[]> {
+    try {
+      const whereClause = companyId ? 'WHERE o."companyId" = :companyId' : "";
+
+      const query = `
+        SELECT 
+          c.id,
+          c.name,
+          c.email,
+          c.type,
+          COUNT(DISTINCT o.id) as "totalOrders",
+          COALESCE(SUM(
+            (SELECT SUM(oi.quantity * oi.price) 
+             FROM order_items oi 
+             WHERE oi."orderId" = o.id AND oi."deletedAt" IS NULL)
+          ), 0) as "totalOrderValue"
+        FROM customers c
+        LEFT JOIN orders o ON c.id = o."customerId" 
+          AND o."deletedAt" IS NULL
+        ${whereClause}
+        AND c."deletedAt" IS NULL
+        GROUP BY c.id, c.name, c.email, c.type
+        ORDER BY "totalOrders" DESC, "totalOrderValue" DESC
+        LIMIT :limit
+      `;
+
+      const results = (await sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { companyId, limit },
+      })) as CustomerWithMostOrders[];
+
+      return results;
+    } catch (error) {
+      console.error("Error getting customers with most orders:", error);
+      throw new Error("Failed to retrieve customers with most orders");
+    }
   }
 
   validateCustomerData(customerData: any): {

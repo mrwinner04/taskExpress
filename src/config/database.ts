@@ -55,18 +55,4 @@ export const testConnection = async (): Promise<void> => {
   }
 };
 
-export const syncDatabase = async (force: boolean = false): Promise<void> => {
-  try {
-    if (process.env.NODE_ENV === "development") {
-      await sequelize.sync({ force });
-      console.log("🔄 Database synchronized successfully");
-    } else {
-      console.log("📊 Using migrations for database schema management");
-    }
-  } catch (error) {
-    console.error("❌ Database sync failed:", error);
-    throw error;
-  }
-};
-
 export default sequelize;

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import CustomerService from "./customer.service";
-import { ValidationUtils, ValidationField } from "../Utils/ValidationUtils";
+import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
 
 const router = Router();
 
@@ -21,6 +21,29 @@ router.get("/company/:companyId", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching customers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
+  }
+});
+
+router.get("/analytics/most-orders", async (req: Request, res: Response) => {
+  try {
+    const { companyId, limit = "10" } = req.query;
+
+    const customers = await CustomerService.getCustomersWithMostOrders(
+      companyId ? (companyId as string) : undefined,
+      parseInt(limit as string, 10)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Customers with most orders retrieved successfully",
+      data: customers,
+    });
+  } catch (error) {
+    console.error("Error in customers with most orders endpoint:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",

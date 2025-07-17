@@ -1,8 +1,41 @@
 import { Router, Request, Response } from "express";
 import InvoiceService from "./invoice.service";
-import { ValidationUtils, ValidationField } from "../Utils/ValidationUtils";
+import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
 
 const router = Router();
+
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const { page = "1", limit = "10", companyId } = req.query;
+
+    if (companyId) {
+      const invoices = await InvoiceService.getAllInvoices(companyId as string);
+      return res.status(200).json({
+        success: true,
+        data: invoices,
+        message: "Invoices retrieved successfully",
+      });
+    }
+
+    const result = await InvoiceService.getAllInvoicesWithPagination(
+      parseInt(page as string, 10),
+      parseInt(limit as string, 10)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.invoices,
+      pagination: result.pagination,
+      message: "Invoices retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
+  }
+});
 
 router.get("/company/:companyId", async (req: Request, res: Response) => {
   try {
@@ -10,9 +43,7 @@ router.get("/company/:companyId", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const invoices = await InvoiceService.getAllInvoicesPerCompany(
-      companyId as string
-    );
+    const invoices = await InvoiceService.getAllInvoices(companyId as string);
 
     return res.status(200).json({
       success: true,

@@ -1,7 +1,42 @@
 import { Invoice, InvoiceAttributes } from "../config/associations";
 
 class InvoiceService {
-  async getAllInvoicesPerCompany(companyId: string): Promise<Invoice[]> {
+  async getAllInvoicesWithPagination(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ invoices: Invoice[]; pagination: any }> {
+    const offset = (page - 1) * limit;
+
+    const [invoices, total] = await Promise.all([
+      Invoice.findAll({
+        where: {
+          deletedAt: null,
+        },
+        order: [["date", "DESC"]],
+        limit,
+        offset,
+      }),
+      Invoice.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      invoices,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
+  }
+
+  async getAllInvoices(companyId: string): Promise<Invoice[]> {
     return await Invoice.findAll({
       where: {
         companyId: companyId,
