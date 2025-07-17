@@ -4,6 +4,31 @@ import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
 
 const router = Router();
 
+// Get all orders with pagination support
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const { page = "1", limit = "10" } = req.query;
+
+    const result = await OrderService.getAllOrders(
+      parseInt(page as string, 10),
+      parseInt(limit as string, 10)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.orders,
+      pagination: result.pagination,
+      message: "Orders retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
+  }
+});
+
 router.get("/company/:companyId", async (req: Request, res: Response) => {
   try {
     const { companyId } = req.params;

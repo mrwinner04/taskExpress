@@ -1,6 +1,41 @@
 import { Order, OrderAttributes, OrderType } from "../config/associations";
 
 class OrderService {
+  // Get all orders across all companies with pagination
+  async getAllOrders(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    orders: Order[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Order.findAndCountAll({
+      where: {
+        deletedAt: null,
+      },
+      order: [["date", "DESC"]],
+      limit,
+      offset,
+    });
+
+    return {
+      orders: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
   async getAllOrdersPerCompany(companyId: string): Promise<Order[]> {
     return await Order.findAll({
       where: {

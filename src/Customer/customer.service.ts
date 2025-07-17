@@ -16,6 +16,38 @@ interface CustomerWithMostOrders {
 }
 
 class CustomerService {
+  // Get all customers across all companies with pagination
+  async getAllCustomers(page: number = 1, limit: number = 10): Promise<{
+    customers: Customer[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+    
+    const { count, rows } = await Customer.findAndCountAll({
+      where: {
+        deletedAt: null,
+      },
+      order: [["name", "ASC"]],
+      limit,
+      offset,
+    });
+
+    return {
+      customers: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
   async getAllCustomersPerCompany(companyId: string): Promise<Customer[]> {
     return await Customer.findAll({
       where: {

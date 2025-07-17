@@ -2,6 +2,38 @@ import { Warehouse, WarehouseAttributes } from "../config/associations";
 import { ProductType } from "../product/product.model";
 
 class WarehouseService {
+  // Get all warehouses across all companies with pagination
+  async getAllWarehouses(page: number = 1, limit: number = 10): Promise<{
+    warehouses: Warehouse[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+    
+    const { count, rows } = await Warehouse.findAndCountAll({
+      where: {
+        deletedAt: null,
+      },
+      order: [["name", "ASC"]],
+      limit,
+      offset,
+    });
+
+    return {
+      warehouses: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
   async getAllWarehousesPerCompany(companyId: string): Promise<Warehouse[]> {
     return await Warehouse.findAll({
       where: {
