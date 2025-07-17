@@ -2,7 +2,6 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Timestamp triggers for all tables
     const tables = [
       "companies",
       "customers",
@@ -22,21 +21,18 @@ module.exports = {
       `);
     }
 
-    // Trigger to prevent ordering deleted products
     await queryInterface.sequelize.query(`
       CREATE TRIGGER trg_no_deleted_products
       BEFORE INSERT ON order_items
       FOR EACH ROW EXECUTE FUNCTION prevent_ordering_deleted_products();
     `);
 
-    // Trigger to prevent negative stock
     await queryInterface.sequelize.query(`
       CREATE TRIGGER trg_prevent_negative_stock
       BEFORE INSERT OR UPDATE ON order_items
       FOR EACH ROW EXECUTE FUNCTION prevent_negative_stock();
     `);
 
-    // Trigger to generate order numbers automatically
     await queryInterface.sequelize.query(`
       CREATE TRIGGER trg_generate_order_number
       BEFORE INSERT ON orders
@@ -45,7 +41,6 @@ module.exports = {
       EXECUTE FUNCTION generate_order_number();
     `);
 
-    // Trigger to create invoice automatically on order creation
     await queryInterface.sequelize.query(`
       CREATE TRIGGER trg_create_invoice_on_order
       AFTER INSERT ON orders

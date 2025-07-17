@@ -1,27 +1,27 @@
 import { Router, Request, Response } from "express";
-import CustomerService from "./customer.service";
+import OrderService from "./order.service";
 import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
 
 const router = Router();
 
-// Get all customers with pagination support
+// Get all orders with pagination support
 router.get("/", async (req: Request, res: Response) => {
   try {
     const { page = "1", limit = "10" } = req.query;
 
-    const result = await CustomerService.getAllCustomers(
+    const result = await OrderService.getAllOrders(
       parseInt(page as string, 10),
       parseInt(limit as string, 10)
     );
 
     return res.status(200).json({
       success: true,
-      data: result.customers,
+      data: result.orders,
       pagination: result.pagination,
-      message: "Customers retrieved successfully",
+      message: "Orders retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching customers:", error);
+    console.error("Error fetching orders:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -35,40 +35,17 @@ router.get("/company/:companyId", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const customers = await CustomerService.getAllCustomersPerCompany(
+    const orders = await OrderService.getAllOrdersPerCompany(
       companyId as string
     );
 
     return res.status(200).json({
       success: true,
-      data: customers,
-      message: "Customers retrieved successfully",
+      data: orders,
+      message: "Orders retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching customers:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Invalid",
-    });
-  }
-});
-
-router.get("/analytics/most-orders", async (req: Request, res: Response) => {
-  try {
-    const { companyId, limit = "10" } = req.query;
-
-    const customers = await CustomerService.getCustomersWithMostOrders(
-      companyId ? (companyId as string) : undefined,
-      parseInt(limit as string, 10)
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Customers with most orders retrieved successfully",
-      data: customers,
-    });
-  } catch (error) {
-    console.error("Error in customers with most orders endpoint:", error);
+    console.error("Error fetching orders:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -80,11 +57,11 @@ router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Customer ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Order ID", res)) return;
 
-    const customer = await CustomerService.getCustomerById(id as string);
+    const order = await OrderService.getOrderById(id as string);
 
-    if (!customer) {
+    if (!order) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -93,11 +70,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: customer,
-      message: "Customer retrieved successfully",
+      data: order,
+      message: "Order retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching customer:", error);
+    console.error("Error fetching order:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -107,21 +84,24 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const { companyId, type, name, email } = req.body;
+    const { companyId, type, customerId, warehouseId, date } = req.body;
 
     const validationFields: ValidationField[] = [
       { value: companyId, fieldName: "Company ID" },
       { value: type, fieldName: "Type" },
-      { value: name, fieldName: "Name" },
+      { value: customerId, fieldName: "Customer ID" },
+      { value: warehouseId, fieldName: "Warehouse ID" },
+      { value: date, fieldName: "Date" },
     ];
 
     if (!ValidationUtils.validateRequiredFields(validationFields, res)) return;
 
-    const validation = CustomerService.validateCustomerData({
+    const validation = OrderService.validateOrderData({
       companyId,
-      type: type as "customer" | "supplier",
-      name,
-      email,
+      type: type as "sales" | "purchase" | "transfer",
+      customerId,
+      warehouseId,
+      date,
     });
 
     if (!validation.isValid) {
@@ -131,20 +111,21 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
 
-    const customer = await CustomerService.createCustomer({
+    const order = await OrderService.createOrder({
       companyId,
-      type: type as "customer" | "supplier",
-      name,
-      email,
+      type: type as "sales" | "purchase" | "transfer",
+      customerId,
+      warehouseId,
+      date: new Date(date),
     });
 
     return res.status(201).json({
       success: true,
-      data: customer,
-      message: "Customer created successfully",
+      data: order,
+      message: "Order created successfully",
     });
   } catch (error) {
-    console.error("Error creating customer:", error);
+    console.error("Error creating order:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -155,17 +136,18 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { type, name, email } = req.body;
+    const { type, customerId, warehouseId, date } = req.body;
 
-    if (!ValidationUtils.validateRequired(id, "Customer ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Order ID", res)) return;
 
-    const customer = await CustomerService.updateCustomer(id as string, {
-      type,
-      name,
-      email,
+    const order = await OrderService.updateOrder(id as string, {
+      type: type as "sales" | "purchase" | "transfer",
+      customerId,
+      warehouseId,
+      date: date ? new Date(date) : undefined,
     });
 
-    if (!customer) {
+    if (!order) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -174,11 +156,11 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: customer,
-      message: "Customer updated successfully",
+      data: order,
+      message: "Order updated successfully",
     });
   } catch (error) {
-    console.error("Error updating customer:", error);
+    console.error("Error updating order:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -190,9 +172,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Customer ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Order ID", res)) return;
 
-    const deleted = await CustomerService.deleteCustomer(id as string);
+    const deleted = await OrderService.deleteOrder(id as string);
 
     if (!deleted) {
       return res.status(404).json({
@@ -203,10 +185,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.status(204).json({
       success: true,
-      message: "Customer deleted successfully",
+      message: "Order deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting customer:", error);
+    console.error("Error deleting order:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -224,18 +206,18 @@ router.get(
         return;
       if (!ValidationUtils.validateRequired(type, "Type", res)) return;
 
-      const customers = await CustomerService.getCustomersByType(
+      const orders = await OrderService.getOrdersByType(
         companyId as string,
-        type as "customer" | "supplier"
+        type as "sales" | "purchase" | "transfer"
       );
 
       return res.status(200).json({
         success: true,
-        data: customers,
-        message: `Customers with type '${type}' retrieved successfully`,
+        data: orders,
+        message: `Orders with type '${type}' retrieved successfully`,
       });
     } catch (error) {
-      console.error("Error fetching customers by type:", error);
+      console.error("Error fetching orders by type:", error);
       return res.status(500).json({
         success: false,
         message: "Invalid",
@@ -244,21 +226,69 @@ router.get(
   }
 );
 
+router.get("/customer/:customerId", async (req: Request, res: Response) => {
+  try {
+    const { customerId } = req.params;
+
+    if (!ValidationUtils.validateRequired(customerId, "Customer ID", res))
+      return;
+
+    const orders = await OrderService.getOrdersByCustomer(customerId as string);
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+      message: "Orders for customer retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching orders by customer:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
+  }
+});
+
+router.get("/warehouse/:warehouseId", async (req: Request, res: Response) => {
+  try {
+    const { warehouseId } = req.params;
+
+    if (!ValidationUtils.validateRequired(warehouseId, "Warehouse ID", res))
+      return;
+
+    const orders = await OrderService.getOrdersByWarehouse(
+      warehouseId as string
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+      message: "Orders for warehouse retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching orders by warehouse:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
+  }
+});
+
 router.get("/company/:companyId/count", async (req: Request, res: Response) => {
   try {
     const { companyId } = req.params;
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const count = await CustomerService.getCustomerCount(companyId as string);
+    const count = await OrderService.getOrderCount(companyId as string);
 
     return res.status(200).json({
       success: true,
       data: { count },
-      message: "Customer count retrieved successfully",
+      message: "Order count retrieved successfully",
     });
   } catch (error) {
-    console.error("Error getting customer count:", error);
+    console.error("Error getting order count:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",

@@ -1,8 +1,40 @@
-import Warehouse, { WarehouseAttributes } from "./warehouse.model";
-import { ProductType } from "../Products/product.model";
+import { Warehouse, WarehouseAttributes } from "../config/associations";
+import { ProductType } from "../product/product.model";
 
-export class WarehouseService {
-  static async getAllWarehouses(companyId: string): Promise<Warehouse[]> {
+class WarehouseService {
+  // Get all warehouses across all companies with pagination
+  async getAllWarehouses(page: number = 1, limit: number = 10): Promise<{
+    warehouses: Warehouse[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+    
+    const { count, rows } = await Warehouse.findAndCountAll({
+      where: {
+        deletedAt: null,
+      },
+      order: [["name", "ASC"]],
+      limit,
+      offset,
+    });
+
+    return {
+      warehouses: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
+  async getAllWarehousesPerCompany(companyId: string): Promise<Warehouse[]> {
     return await Warehouse.findAll({
       where: {
         companyId: companyId,
@@ -12,11 +44,11 @@ export class WarehouseService {
     });
   }
 
-  static async getWarehouseById(id: string): Promise<Warehouse | null> {
+  async getWarehouseById(id: string): Promise<Warehouse | null> {
     return await Warehouse.findByPk(id);
   }
 
-  static async createWarehouse(warehouseData: {
+  async createWarehouse(warehouseData: {
     companyId: string;
     name: string;
     type?: ProductType;
@@ -29,7 +61,7 @@ export class WarehouseService {
     });
   }
 
-  static async updateWarehouse(
+  async updateWarehouse(
     id: string,
     updateData: Partial<WarehouseAttributes>
   ): Promise<Warehouse | null> {
@@ -46,7 +78,7 @@ export class WarehouseService {
     return warehouse;
   }
 
-  static async deleteWarehouse(id: string): Promise<boolean> {
+  async deleteWarehouse(id: string): Promise<boolean> {
     const warehouse = await Warehouse.findByPk(id);
     if (!warehouse) {
       return false;
@@ -59,7 +91,7 @@ export class WarehouseService {
     return true;
   }
 
-  static async getWarehousesByType(
+  async getWarehousesByType(
     companyId: string,
     type: ProductType
   ): Promise<Warehouse[]> {
@@ -73,33 +105,7 @@ export class WarehouseService {
     });
   }
 
-  static async searchWarehouses(
-    companyId: string,
-    searchTerm: string
-  ): Promise<Warehouse[]> {
-    return await Warehouse.findAll({
-      where: {
-        companyId: companyId,
-        name: {
-          [require("sequelize").Op.iLike]: `%${searchTerm}%`,
-        },
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  static async getWarehousesByCompany(companyId: string): Promise<Warehouse[]> {
-    return await Warehouse.findAll({
-      where: {
-        companyId: companyId,
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  static async getWarehouseCount(companyId: string): Promise<number> {
+  async getWarehouseCount(companyId: string): Promise<number> {
     return await Warehouse.count({
       where: {
         companyId: companyId,
@@ -108,41 +114,7 @@ export class WarehouseService {
     });
   }
 
-  static async getWarehouseCountByType(
-    companyId: string,
-    type: ProductType
-  ): Promise<number> {
-    return await Warehouse.count({
-      where: {
-        companyId: companyId,
-        type,
-        deletedAt: null,
-      },
-    });
-  }
-
-  static async isWarehouseNameExists(
-    companyId: string,
-    name: string,
-    excludeId?: string
-  ): Promise<boolean> {
-    const whereClause: any = {
-      companyId: companyId,
-      name,
-      deletedAt: null,
-    };
-
-    if (excludeId) {
-      whereClause.id = {
-        [require("sequelize").Op.ne]: excludeId,
-      };
-    }
-
-    const count = await Warehouse.count({ where: whereClause });
-    return count > 0;
-  }
-
-  static validateWarehouseData(warehouseData: any): {
+  validateWarehouseData(warehouseData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -173,3 +145,5 @@ export class WarehouseService {
     };
   }
 }
+
+export default new WarehouseService();

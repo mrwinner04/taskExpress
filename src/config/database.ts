@@ -38,9 +38,9 @@ const sequelize = new Sequelize(
       idle: 10000,
     },
     define: {
-      paranoid: true, // Enable soft deletes
-      underscored: false, // camelCase
-      timestamps: true, // createdAt and updatedAt
+      paranoid: true,
+      underscored: false,
+      timestamps: true,
     },
   }
 );
@@ -51,20 +51,6 @@ export const testConnection = async (): Promise<void> => {
     console.log("✅ Database connection established successfully");
   } catch (error) {
     console.error("❌ Unable to connect to database:", error);
-    throw error;
-  }
-};
-
-export const syncDatabase = async (force: boolean = false): Promise<void> => {
-  try {
-    if (process.env.NODE_ENV === "development") {
-      await sequelize.sync({ force });
-      console.log("🔄 Database synchronized successfully");
-    } else {
-      console.log("📊 Using migrations for database schema management");
-    }
-  } catch (error) {
-    console.error("❌ Database sync failed:", error);
     throw error;
   }
 };

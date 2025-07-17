@@ -1,8 +1,5 @@
-"use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Check if warehouses already exist
     const existingWarehouses = await queryInterface.sequelize.query(
       "SELECT COUNT(*) as count FROM warehouses;",
       { type: Sequelize.QueryTypes.SELECT }
@@ -13,7 +10,6 @@ module.exports = {
       return;
     }
 
-    // Create sample warehouses for each company
     await queryInterface.bulkInsert("warehouses", [
       // TechCorp Solutions warehouses
       {

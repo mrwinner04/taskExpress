@@ -1,27 +1,35 @@
 import { Router, Request, Response } from "express";
-import WarehouseService from "./warehouse.service";
+import InvoiceService from "./invoice.service";
 import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
 
 const router = Router();
 
-// Get all warehouses with pagination support
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const { page = "1", limit = "10" } = req.query;
+    const { page = "1", limit = "10", companyId } = req.query;
 
-    const result = await WarehouseService.getAllWarehouses(
+    if (companyId) {
+      const invoices = await InvoiceService.getAllInvoices(companyId as string);
+      return res.status(200).json({
+        success: true,
+        data: invoices,
+        message: "Invoices retrieved successfully",
+      });
+    }
+
+    const result = await InvoiceService.getAllInvoicesWithPagination(
       parseInt(page as string, 10),
       parseInt(limit as string, 10)
     );
 
     return res.status(200).json({
       success: true,
-      data: result.warehouses,
+      data: result.invoices,
       pagination: result.pagination,
-      message: "Warehouses retrieved successfully",
+      message: "Invoices retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching warehouses:", error);
+    console.error("Error fetching invoices:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -35,17 +43,15 @@ router.get("/company/:companyId", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const warehouses = await WarehouseService.getAllWarehousesPerCompany(
-      companyId as string
-    );
+    const invoices = await InvoiceService.getAllInvoices(companyId as string);
 
     return res.status(200).json({
       success: true,
-      data: warehouses,
-      message: "Warehouses retrieved successfully",
+      data: invoices,
+      message: "Invoices retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching warehouses:", error);
+    console.error("Error fetching invoices:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -57,11 +63,11 @@ router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Warehouse ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const warehouse = await WarehouseService.getWarehouseById(id as string);
+    const invoice = await InvoiceService.getInvoiceById(id as string);
 
-    if (!warehouse) {
+    if (!invoice) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -70,11 +76,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: warehouse,
-      message: "Warehouse retrieved successfully",
+      data: invoice,
+      message: "Invoice retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching warehouse:", error);
+    console.error("Error fetching invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -84,21 +90,22 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const { companyId, name, type, address } = req.body;
+    const { companyId, orderId, date, status } = req.body;
 
     // Validate required fields using the new validation method
     const validationFields: ValidationField[] = [
       { value: companyId, fieldName: "Company ID" },
-      { value: name, fieldName: "Name" },
+      { value: orderId, fieldName: "Order ID" },
+      { value: date, fieldName: "Date" },
     ];
 
     if (!ValidationUtils.validateRequiredFields(validationFields, res)) return;
 
-    const validation = WarehouseService.validateWarehouseData({
+    const validation = InvoiceService.validateInvoiceData({
       companyId,
-      name,
-      type: type as "solid" | "liquid",
-      address,
+      orderId,
+      date,
+      status,
     });
 
     if (!validation.isValid) {
@@ -108,20 +115,20 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
 
-    const warehouse = await WarehouseService.createWarehouse({
+    const invoice = await InvoiceService.createInvoice({
       companyId,
-      name,
-      type: type as "solid" | "liquid",
-      address,
+      orderId,
+      date: new Date(date),
+      status,
     });
 
     return res.status(201).json({
       success: true,
-      data: warehouse,
-      message: "Warehouse created successfully",
+      data: invoice,
+      message: "Invoice created successfully",
     });
   } catch (error) {
-    console.error("Error creating warehouse:", error);
+    console.error("Error creating invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -132,17 +139,16 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, type, address } = req.body;
+    const { date, status } = req.body;
 
-    if (!ValidationUtils.validateRequired(id, "Warehouse ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const warehouse = await WarehouseService.updateWarehouse(id as string, {
-      name,
-      type: type as "solid" | "liquid",
-      address,
+    const invoice = await InvoiceService.updateInvoice(id as string, {
+      date: date ? new Date(date) : undefined,
+      status,
     });
 
-    if (!warehouse) {
+    if (!invoice) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -151,11 +157,11 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: warehouse,
-      message: "Warehouse updated successfully",
+      data: invoice,
+      message: "Invoice updated successfully",
     });
   } catch (error) {
-    console.error("Error updating warehouse:", error);
+    console.error("Error updating invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -167,9 +173,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Warehouse ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const deleted = await WarehouseService.deleteWarehouse(id as string);
+    const deleted = await InvoiceService.deleteInvoice(id as string);
 
     if (!deleted) {
       return res.status(404).json({
@@ -180,10 +186,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.status(204).json({
       success: true,
-      message: "Warehouse deleted successfully",
+      message: "Invoice deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting warehouse:", error);
+    console.error("Error deleting invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -191,35 +197,29 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.get(
-  "/company/:companyId/type/:type",
-  async (req: Request, res: Response) => {
-    try {
-      const { companyId, type } = req.params;
+router.get("/order/:orderId", async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
 
-      if (!ValidationUtils.validateRequired(companyId, "Company ID", res))
-        return;
-      if (!ValidationUtils.validateRequired(type, "Type", res)) return;
+    if (!ValidationUtils.validateRequired(orderId, "Order ID", res)) return;
 
-      const warehouses = await WarehouseService.getWarehousesByType(
-        companyId as string,
-        type as "solid" | "liquid"
-      );
+    const invoices = await InvoiceService.getInvoicesByOrderId(
+      orderId as string
+    );
 
-      return res.status(200).json({
-        success: true,
-        data: warehouses,
-        message: `Warehouses with type '${type}' retrieved successfully`,
-      });
-    } catch (error) {
-      console.error("Error fetching warehouses by type:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Invalid",
-      });
-    }
+    return res.status(200).json({
+      success: true,
+      data: invoices,
+      message: "Invoices for order retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching invoices by order:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
   }
-);
+});
 
 router.get("/company/:companyId/count", async (req: Request, res: Response) => {
   try {
@@ -227,15 +227,15 @@ router.get("/company/:companyId/count", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const count = await WarehouseService.getWarehouseCount(companyId as string);
+    const count = await InvoiceService.getInvoiceCount(companyId as string);
 
     return res.status(200).json({
       success: true,
       data: { count },
-      message: "Warehouse count retrieved successfully",
+      message: "Invoice count retrieved successfully",
     });
   } catch (error) {
-    console.error("Error getting warehouse count:", error);
+    console.error("Error getting invoice count:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",

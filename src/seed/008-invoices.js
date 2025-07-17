@@ -1,5 +1,3 @@
-"use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Check if invoices already exist
@@ -13,9 +11,6 @@ module.exports = {
       return;
     }
 
-    // Create invoices for sales orders
-    // Note: The trigger trg_create_invoice_on_order should automatically create invoices,
-    // but we're creating them manually for seed data consistency
     await queryInterface.bulkInsert("invoices", [
       // TechCorp Solutions invoices
 

@@ -1,14 +1,15 @@
-import Company from "../Company/company.model";
-import User from "../User/user.model";
-import Customer from "../Customer/customer.model";
-import Product from "../Products/product.model";
-import Warehouse from "../Warehouse/warehouse.model";
-import Order from "../Orders/order.model";
-import OrderItem from "../Orders/order-item.model";
-import Invoice from "../Invoices/invoice.model";
+import Company from "../company/company.model";
+import User from "../user/user.model";
+import Customer from "../customer/customer.model";
+import Product from "../product/product.model";
+import Warehouse from "../warehouse/warehouse.model";
+import Order from "../order/order.model";
+import OrderItem from "../order/order-item.model";
+import Invoice from "../invoice/invoice.model";
+
+//kym baza danni
 
 const setupAssociations = () => {
-  // Company associations
   Company.hasMany(User, {
     foreignKey: "companyId",
     sourceKey: "id",
@@ -212,14 +213,14 @@ export {
   Invoice,
 };
 
-export type { CompanyAttributes } from "../Company/company.model";
-export type { UserAttributes } from "../User/user.model";
+export type { CompanyAttributes } from "../company/company.model";
+export type { UserAttributes } from "../user/user.model";
 export type {
   CustomerAttributes,
   CustomerType,
-} from "../Customer/customer.model";
-export type { ProductAttributes, ProductType } from "../Products/product.model";
-export type { WarehouseAttributes } from "../Warehouse/warehouse.model";
-export type { OrderAttributes, OrderType } from "../Orders/order.model";
-export type { OrderItemAttributes } from "../Orders/order-item.model";
-export type { InvoiceAttributes } from "../Invoices/invoice.model";
+} from "../customer/customer.model";
+export type { ProductAttributes, ProductType } from "../product/product.model";
+export type { WarehouseAttributes } from "../warehouse/warehouse.model";
+export type { OrderAttributes, OrderType } from "../order/order.model";
+export type { OrderItemAttributes } from "../order/order-item.model";
+export type { InvoiceAttributes } from "../invoice/invoice.model";

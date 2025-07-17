@@ -1,9 +1,54 @@
-import Customer, { CustomerAttributes, CustomerType } from "./customer.model";
+import {
+  Customer,
+  CustomerAttributes,
+  CustomerType,
+} from "../config/associations";
+import { QueryTypes } from "sequelize";
+import sequelize from "../config/database";
 
-export class CustomerService {
-  static async getAllCustomersPerCompany(
-    companyId: string
-  ): Promise<Customer[]> {
+interface CustomerWithMostOrders {
+  id: string;
+  name: string;
+  email: string;
+  type: string;
+  totalOrders: number;
+  totalOrderValue: number;
+}
+
+class CustomerService {
+  // Get all customers across all companies with pagination
+  async getAllCustomers(page: number = 1, limit: number = 10): Promise<{
+    customers: Customer[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const offset = (page - 1) * limit;
+    
+    const { count, rows } = await Customer.findAndCountAll({
+      where: {
+        deletedAt: null,
+      },
+      order: [["name", "ASC"]],
+      limit,
+      offset,
+    });
+
+    return {
+      customers: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    };
+  }
+
+  async getAllCustomersPerCompany(companyId: string): Promise<Customer[]> {
     return await Customer.findAll({
       where: {
         companyId,
@@ -13,11 +58,11 @@ export class CustomerService {
     });
   }
 
-  static async getCustomerById(id: string): Promise<Customer | null> {
+  async getCustomerById(id: string): Promise<Customer | null> {
     return await Customer.findByPk(id);
   }
 
-  static async createCustomer(customerData: {
+  async createCustomer(customerData: {
     companyId: string;
     type: CustomerType;
     name: string;
@@ -30,7 +75,7 @@ export class CustomerService {
     });
   }
 
-  static async updateCustomer(
+  async updateCustomer(
     id: string,
     updateData: Partial<CustomerAttributes>
   ): Promise<Customer | null> {
@@ -47,7 +92,7 @@ export class CustomerService {
     return customer;
   }
 
-  static async deleteCustomer(id: string): Promise<boolean> {
+  async deleteCustomer(id: string): Promise<boolean> {
     const customer = await Customer.findByPk(id);
     if (!customer) {
       return false;
@@ -60,7 +105,7 @@ export class CustomerService {
     return true;
   }
 
-  static async getCustomersByType(
+  async getCustomersByType(
     companyId: string,
     type: CustomerType
   ): Promise<Customer[]> {
@@ -74,7 +119,7 @@ export class CustomerService {
     });
   }
 
-  static async getCustomerCount(companyId: string): Promise<number> {
+  async getCustomerCount(companyId: string): Promise<number> {
     return await Customer.count({
       where: {
         companyId,
@@ -83,7 +128,48 @@ export class CustomerService {
     });
   }
 
-  static validateCustomerData(customerData: any): {
+  async getCustomersWithMostOrders(
+    companyId?: string,
+    limit: number = 10
+  ): Promise<CustomerWithMostOrders[]> {
+    try {
+      const whereClause = companyId ? 'WHERE o."companyId" = :companyId' : "";
+
+      const query = `
+        SELECT 
+          c.id,
+          c.name,
+          c.email,
+          c.type,
+          COUNT(DISTINCT o.id) as "totalOrders",
+          COALESCE(SUM(
+            (SELECT SUM(oi.quantity * oi.price) 
+             FROM order_items oi 
+             WHERE oi."orderId" = o.id AND oi."deletedAt" IS NULL)
+          ), 0) as "totalOrderValue"
+        FROM customers c
+        LEFT JOIN orders o ON c.id = o."customerId" 
+          AND o."deletedAt" IS NULL
+        ${whereClause}
+        AND c."deletedAt" IS NULL
+        GROUP BY c.id, c.name, c.email, c.type
+        ORDER BY "totalOrders" DESC, "totalOrderValue" DESC
+        LIMIT :limit
+      `;
+
+      const results = (await sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { companyId, limit },
+      })) as CustomerWithMostOrders[];
+
+      return results;
+    } catch (error) {
+      console.error("Error getting customers with most orders:", error);
+      throw new Error("Failed to retrieve customers with most orders");
+    }
+  }
+
+  validateCustomerData(customerData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -121,3 +207,5 @@ export class CustomerService {
     };
   }
 }
+
+export default new CustomerService();
