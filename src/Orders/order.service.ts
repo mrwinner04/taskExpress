@@ -1,7 +1,7 @@
-import Order, { OrderAttributes, OrderType } from "./order.model";
+import { Order, OrderAttributes, OrderType } from "../config/associations";
 
-export class OrderService {
-  static async getAllOrders(companyId: string): Promise<Order[]> {
+class OrderService {
+  async getAllOrdersPerCompany(companyId: string): Promise<Order[]> {
     return await Order.findAll({
       where: {
         companyId: companyId,
@@ -11,11 +11,11 @@ export class OrderService {
     });
   }
 
-  static async getOrderById(id: string): Promise<Order | null> {
+  async getOrderById(id: string): Promise<Order | null> {
     return await Order.findByPk(id);
   }
 
-  static async createOrder(orderData: {
+  async createOrder(orderData: {
     companyId: string;
     type: OrderType;
     customerId: string;
@@ -32,7 +32,7 @@ export class OrderService {
     });
   }
 
-  static async updateOrder(
+  async updateOrder(
     id: string,
     updateData: Partial<OrderAttributes>
   ): Promise<Order | null> {
@@ -49,7 +49,7 @@ export class OrderService {
     return order;
   }
 
-  static async deleteOrder(id: string): Promise<boolean> {
+  async deleteOrder(id: string): Promise<boolean> {
     const order = await Order.findByPk(id);
     if (!order) {
       return false;
@@ -62,10 +62,7 @@ export class OrderService {
     return true;
   }
 
-  static async getOrdersByType(
-    companyId: string,
-    type: OrderType
-  ): Promise<Order[]> {
+  async getOrdersByType(companyId: string, type: OrderType): Promise<Order[]> {
     return await Order.findAll({
       where: {
         companyId: companyId,
@@ -76,7 +73,7 @@ export class OrderService {
     });
   }
 
-  static async getOrdersByCustomer(customerId: string): Promise<Order[]> {
+  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
     return await Order.findAll({
       where: {
         customerId: customerId,
@@ -86,7 +83,7 @@ export class OrderService {
     });
   }
 
-  static async getOrdersByWarehouse(warehouseId: string): Promise<Order[]> {
+  async getOrdersByWarehouse(warehouseId: string): Promise<Order[]> {
     return await Order.findAll({
       where: {
         warehouseId: warehouseId,
@@ -96,7 +93,7 @@ export class OrderService {
     });
   }
 
-  static async getOrderCount(companyId: string): Promise<number> {
+  async getOrderCount(companyId: string): Promise<number> {
     return await Order.count({
       where: {
         companyId: companyId,
@@ -105,26 +102,13 @@ export class OrderService {
     });
   }
 
-  static async getOrderCountByType(
-    companyId: string,
-    type: OrderType
-  ): Promise<number> {
-    return await Order.count({
-      where: {
-        companyId: companyId,
-        type,
-        deletedAt: null,
-      },
-    });
-  }
-
-  private static generateOrderNumber(): string {
+  private generateOrderNumber(): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
     return `ORD-${timestamp}-${random}`;
   }
 
-  static validateOrderData(orderData: any): {
+  validateOrderData(orderData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -165,3 +149,5 @@ export class OrderService {
     };
   }
 }
+
+export default new OrderService();

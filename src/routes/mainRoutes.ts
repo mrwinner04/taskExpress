@@ -5,6 +5,7 @@ import userRoutes from "../User/user.routes";
 import productRoutes from "../Products/product.routes";
 import warehouseRoutes from "../Warehouse/warehouse.routes";
 import orderRoutes from "../Orders/order.routes";
+import invoiceRoutes from "../Invoices/invoice.routes";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/users", userRoutes);
 router.use("/products", productRoutes);
 router.use("/warehouses", warehouseRoutes);
 router.use("/orders", orderRoutes);
+router.use("/invoices", invoiceRoutes);
 
 export default router;

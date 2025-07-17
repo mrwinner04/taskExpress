@@ -1,71 +1,60 @@
 import { Response } from "express";
 
+export interface ValidationField {
+  value: any;
+  fieldName: string;
+}
+
 export class ValidationUtils {
+  static validateRequiredFields(
+    fields: ValidationField[],
+    res: Response
+  ): boolean {
+    for (const field of fields) {
+      if (!field.value) {
+        res.status(400).json({
+          success: false,
+          message: "Validation failed",
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
   static validateRequired(
-    value: string | undefined,
+    value: any,
     fieldName: string,
     res: Response
-  ): value is string {
+  ): boolean {
     if (!value) {
       res.status(400).json({
         success: false,
-        message: `${fieldName} is required`,
+        message: "Validation failed",
       });
       return false;
     }
     return true;
   }
 
-  static validateBodyRequired(
-    value: string | undefined,
-    fieldName: string,
-    res: Response
-  ): value is string {
-    if (!value || value.trim().length === 0) {
-      res.status(400).json({
-        success: false,
-        message: `${fieldName} is required`,
-      });
-      return false;
-    }
-    return true;
-  }
-
-  static validateUUID(
-    uuid: string | undefined,
-    fieldName: string,
-    res: Response
-  ): uuid is string {
-    if (!this.validateRequired(uuid, fieldName, res)) {
-      return false;
-    }
-
+  static validateUUID(value: string, res: Response): boolean {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(uuid)) {
+    if (!uuidRegex.test(value)) {
       res.status(400).json({
         success: false,
-        message: `${fieldName} must be a valid UUID`,
+        message: "Validation failed",
       });
       return false;
     }
     return true;
   }
 
-  static validateEmail(
-    email: string | undefined,
-    fieldName: string,
-    res: Response
-  ): email is string {
-    if (!this.validateRequired(email, fieldName, res)) {
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+  static validatePositiveNumber(value: number, res: Response): boolean {
+    if (typeof value !== "number" || value <= 0) {
       res.status(400).json({
         success: false,
-        message: `${fieldName} must be a valid email address`,
+        message: "Validation failed",
       });
       return false;
     }

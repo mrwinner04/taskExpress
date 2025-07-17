@@ -1,8 +1,5 @@
-"use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Check if orders already exist
     const existingOrders = await queryInterface.sequelize.query(
       "SELECT COUNT(*) as count FROM orders;",
       { type: Sequelize.QueryTypes.SELECT }
@@ -13,7 +10,6 @@ module.exports = {
       return;
     }
 
-    // Create sample orders for different scenarios
     await queryInterface.bulkInsert("orders", [
       // TechCorp Solutions orders
       {

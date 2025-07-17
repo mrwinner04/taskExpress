@@ -38,9 +38,9 @@ const sequelize = new Sequelize(
       idle: 10000,
     },
     define: {
-      paranoid: true, // Enable soft deletes
-      underscored: false, // camelCase
-      timestamps: true, // createdAt and updatedAt
+      paranoid: true,
+      underscored: false,
+      timestamps: true,
     },
   }
 );

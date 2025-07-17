@@ -1,7 +1,7 @@
-import User, { UserAttributes } from "./user.model";
+import { User, UserAttributes } from "../config/associations";
 
-export class UserService {
-  static async getAllUsersPerCompany(companyId: string): Promise<User[]> {
+class UserService {
+  async getAllUsersPerCompany(companyId: string): Promise<User[]> {
     return await User.findAll({
       where: {
         companyId: companyId,
@@ -11,11 +11,11 @@ export class UserService {
     });
   }
 
-  static async getUserById(id: string): Promise<User | null> {
+  async getUserById(id: string): Promise<User | null> {
     return await User.findByPk(id);
   }
 
-  static async createUser(userData: {
+  async createUser(userData: {
     companyId: string;
     email: string;
     name: string;
@@ -27,7 +27,7 @@ export class UserService {
     });
   }
 
-  static async updateUser(
+  async updateUser(
     id: string,
     updateData: Partial<UserAttributes>
   ): Promise<User | null> {
@@ -44,7 +44,7 @@ export class UserService {
     return user;
   }
 
-  static async deleteUser(id: string): Promise<boolean> {
+  async deleteUser(id: string): Promise<boolean> {
     const user = await User.findByPk(id);
     if (!user) {
       return false;
@@ -57,7 +57,7 @@ export class UserService {
     return true;
   }
 
-  static async getUserByEmail(email: string): Promise<User | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
     return await User.findOne({
       where: {
         email,
@@ -66,17 +66,7 @@ export class UserService {
     });
   }
 
-  static async getUsersByCompany(companyId: string): Promise<User[]> {
-    return await User.findAll({
-      where: {
-        companyId: companyId,
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  static async getUserCount(companyId: string): Promise<number> {
+  async getUserCount(companyId: string): Promise<number> {
     return await User.count({
       where: {
         companyId: companyId,
@@ -85,10 +75,7 @@ export class UserService {
     });
   }
 
-  static async isEmailExists(
-    email: string,
-    excludeId?: string
-  ): Promise<boolean> {
+  async isEmailExists(email: string, excludeId?: string): Promise<boolean> {
     const whereClause: any = {
       email,
       deletedAt: null,
@@ -104,7 +91,7 @@ export class UserService {
     return count > 0;
   }
 
-  static validateUserData(userData: any): {
+  validateUserData(userData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -136,3 +123,5 @@ export class UserService {
     };
   }
 }
+
+export default new UserService();

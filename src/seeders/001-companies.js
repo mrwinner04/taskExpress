@@ -1,5 +1,3 @@
-"use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     const existingCompanies = await queryInterface.sequelize.query(

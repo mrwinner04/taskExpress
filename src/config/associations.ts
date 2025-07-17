@@ -7,8 +7,9 @@ import Order from "../Orders/order.model";
 import OrderItem from "../Orders/order-item.model";
 import Invoice from "../Invoices/invoice.model";
 
+//kym baza danni
+
 const setupAssociations = () => {
-  // Company associations
   Company.hasMany(User, {
     foreignKey: "companyId",
     sourceKey: "id",

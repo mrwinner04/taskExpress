@@ -1,7 +1,7 @@
-import { Company, User } from "../models/associations";
+import { Company, User } from "../config/associations";
 
-export class CompanyService {
-  static async getAllCompanies(page: number = 1, limit: number = 10) {
+class CompanyService {
+  async getAllCompanies(page: number = 1, limit: number = 10) {
     try {
       const offset = (page - 1) * limit;
 
@@ -34,7 +34,7 @@ export class CompanyService {
     }
   }
 
-  static async getCompanyById(id: string) {
+  async getCompanyById(id: string) {
     try {
       const company = await Company.findByPk(id, {
         include: [
@@ -57,7 +57,7 @@ export class CompanyService {
     }
   }
 
-  static async createCompany(data: { name: string; modifiedBy?: string }) {
+  async createCompany(data: { name: string; modifiedBy?: string }) {
     try {
       const company = await Company.create({
         name: data.name,
@@ -73,7 +73,7 @@ export class CompanyService {
     }
   }
 
-  static async updateCompany(
+  async updateCompany(
     id: string,
     data: { name?: string; modifiedBy?: string }
   ) {
@@ -96,7 +96,7 @@ export class CompanyService {
     }
   }
 
-  static async deleteCompany(id: string, modifiedBy?: string) {
+  async deleteCompany(id: string, modifiedBy?: string) {
     try {
       const company = await Company.findByPk(id);
 
@@ -120,3 +120,5 @@ export class CompanyService {
     }
   }
 }
+
+export default new CompanyService();

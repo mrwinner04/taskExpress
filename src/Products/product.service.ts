@@ -1,7 +1,11 @@
-import Product, { ProductAttributes, ProductType } from "./product.model";
+import {
+  Product,
+  ProductAttributes,
+  ProductType,
+} from "../config/associations";
 
-export class ProductService {
-  static async getAllProducts(companyId: string): Promise<Product[]> {
+class ProductService {
+  async getAllProductsPerCompany(companyId: string): Promise<Product[]> {
     return await Product.findAll({
       where: {
         companyId: companyId,
@@ -11,11 +15,11 @@ export class ProductService {
     });
   }
 
-  static async getProductById(id: string): Promise<Product | null> {
+  async getProductById(id: string): Promise<Product | null> {
     return await Product.findByPk(id);
   }
 
-  static async createProduct(productData: {
+  async createProduct(productData: {
     companyId: string;
     name: string;
     code: string;
@@ -29,7 +33,7 @@ export class ProductService {
     });
   }
 
-  static async updateProduct(
+  async updateProduct(
     id: string,
     updateData: Partial<ProductAttributes>
   ): Promise<Product | null> {
@@ -46,7 +50,7 @@ export class ProductService {
     return product;
   }
 
-  static async deleteProduct(id: string): Promise<boolean> {
+  async deleteProduct(id: string): Promise<boolean> {
     const product = await Product.findByPk(id);
     if (!product) {
       return false;
@@ -59,7 +63,7 @@ export class ProductService {
     return true;
   }
 
-  static async getProductsByType(
+  async getProductsByType(
     companyId: string,
     type: ProductType
   ): Promise<Product[]> {
@@ -73,49 +77,7 @@ export class ProductService {
     });
   }
 
-  static async searchProducts(
-    companyId: string,
-    searchTerm: string
-  ): Promise<Product[]> {
-    return await Product.findAll({
-      where: {
-        companyId: companyId,
-        [require("sequelize").Op.or]: [
-          {
-            name: {
-              [require("sequelize").Op.iLike]: `%${searchTerm}%`,
-            },
-          },
-          {
-            code: {
-              [require("sequelize").Op.iLike]: `%${searchTerm}%`,
-            },
-          },
-        ],
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  static async getProductsByPriceRange(
-    companyId: string,
-    minPrice: number,
-    maxPrice: number
-  ): Promise<Product[]> {
-    return await Product.findAll({
-      where: {
-        companyId: companyId,
-        price: {
-          [require("sequelize").Op.between]: [minPrice, maxPrice],
-        },
-        deletedAt: null,
-      },
-      order: [["price", "ASC"]],
-    });
-  }
-
-  static async getProductCount(companyId: string): Promise<number> {
+  async getProductCount(companyId: string): Promise<number> {
     return await Product.count({
       where: {
         companyId: companyId,
@@ -124,41 +86,7 @@ export class ProductService {
     });
   }
 
-  static async getProductCountByType(
-    companyId: string,
-    type: ProductType
-  ): Promise<number> {
-    return await Product.count({
-      where: {
-        companyId: companyId,
-        type,
-        deletedAt: null,
-      },
-    });
-  }
-
-  static async isProductCodeExists(
-    companyId: string,
-    code: string,
-    excludeId?: string
-  ): Promise<boolean> {
-    const whereClause: any = {
-      companyId: companyId,
-      code,
-      deletedAt: null,
-    };
-
-    if (excludeId) {
-      whereClause.id = {
-        [require("sequelize").Op.ne]: excludeId,
-      };
-    }
-
-    const count = await Product.count({ where: whereClause });
-    return count > 0;
-  }
-
-  static validateProductData(productData: any): {
+  validateProductData(productData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -198,3 +126,5 @@ export class ProductService {
     };
   }
 }
+
+export default new ProductService();

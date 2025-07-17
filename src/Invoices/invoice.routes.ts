@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import ProductService from "./product.service";
+import InvoiceService from "./invoice.service";
 import { ValidationUtils, ValidationField } from "../Utils/ValidationUtils";
 
 const router = Router();
@@ -10,17 +10,17 @@ router.get("/company/:companyId", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const products = await ProductService.getAllProductsPerCompany(
+    const invoices = await InvoiceService.getAllInvoicesPerCompany(
       companyId as string
     );
 
     return res.status(200).json({
       success: true,
-      data: products,
-      message: "Products retrieved successfully",
+      data: invoices,
+      message: "Invoices retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching invoices:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -32,11 +32,11 @@ router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const product = await ProductService.getProductById(id as string);
+    const invoice = await InvoiceService.getInvoiceById(id as string);
 
-    if (!product) {
+    if (!invoice) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -45,11 +45,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: product,
-      message: "Product retrieved successfully",
+      data: invoice,
+      message: "Invoice retrieved successfully",
     });
   } catch (error) {
-    console.error("Error fetching product:", error);
+    console.error("Error fetching invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -59,24 +59,22 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const { companyId, name, code, price, type } = req.body;
+    const { companyId, orderId, date, status } = req.body;
 
     // Validate required fields using the new validation method
     const validationFields: ValidationField[] = [
       { value: companyId, fieldName: "Company ID" },
-      { value: name, fieldName: "Name" },
-      { value: code, fieldName: "Code" },
-      { value: price, fieldName: "Price" },
+      { value: orderId, fieldName: "Order ID" },
+      { value: date, fieldName: "Date" },
     ];
 
     if (!ValidationUtils.validateRequiredFields(validationFields, res)) return;
 
-    const validation = ProductService.validateProductData({
+    const validation = InvoiceService.validateInvoiceData({
       companyId,
-      name,
-      code,
-      price: parseFloat(price),
-      type: type as "solid" | "liquid",
+      orderId,
+      date,
+      status,
     });
 
     if (!validation.isValid) {
@@ -86,21 +84,20 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
 
-    const product = await ProductService.createProduct({
+    const invoice = await InvoiceService.createInvoice({
       companyId,
-      name,
-      code,
-      price: parseFloat(price),
-      type: type as "solid" | "liquid",
+      orderId,
+      date: new Date(date),
+      status,
     });
 
     return res.status(201).json({
       success: true,
-      data: product,
-      message: "Product created successfully",
+      data: invoice,
+      message: "Invoice created successfully",
     });
   } catch (error) {
-    console.error("Error creating product:", error);
+    console.error("Error creating invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -111,18 +108,16 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, code, price, type } = req.body;
+    const { date, status } = req.body;
 
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const product = await ProductService.updateProduct(id as string, {
-      name,
-      code,
-      price,
-      type: type as "solid" | "liquid",
+    const invoice = await InvoiceService.updateInvoice(id as string, {
+      date: date ? new Date(date) : undefined,
+      status,
     });
 
-    if (!product) {
+    if (!invoice) {
       return res.status(404).json({
         success: false,
         message: "Invalid",
@@ -131,11 +126,11 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: product,
-      message: "Product updated successfully",
+      data: invoice,
+      message: "Invoice updated successfully",
     });
   } catch (error) {
-    console.error("Error updating product:", error);
+    console.error("Error updating invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -147,9 +142,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
+    if (!ValidationUtils.validateRequired(id, "Invoice ID", res)) return;
 
-    const deleted = await ProductService.deleteProduct(id as string);
+    const deleted = await InvoiceService.deleteInvoice(id as string);
 
     if (!deleted) {
       return res.status(404).json({
@@ -160,10 +155,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.status(204).json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Invoice deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting product:", error);
+    console.error("Error deleting invoice:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",
@@ -171,35 +166,29 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.get(
-  "/company/:companyId/type/:type",
-  async (req: Request, res: Response) => {
-    try {
-      const { companyId, type } = req.params;
+router.get("/order/:orderId", async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
 
-      if (!ValidationUtils.validateRequired(companyId, "Company ID", res))
-        return;
-      if (!ValidationUtils.validateRequired(type, "Type", res)) return;
+    if (!ValidationUtils.validateRequired(orderId, "Order ID", res)) return;
 
-      const products = await ProductService.getProductsByType(
-        companyId as string,
-        type as "solid" | "liquid"
-      );
+    const invoices = await InvoiceService.getInvoicesByOrderId(
+      orderId as string
+    );
 
-      return res.status(200).json({
-        success: true,
-        data: products,
-        message: `Products with type '${type}' retrieved successfully`,
-      });
-    } catch (error) {
-      console.error("Error fetching products by type:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Invalid",
-      });
-    }
+    return res.status(200).json({
+      success: true,
+      data: invoices,
+      message: "Invoices for order retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching invoices by order:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Invalid",
+    });
   }
-);
+});
 
 router.get("/company/:companyId/count", async (req: Request, res: Response) => {
   try {
@@ -207,15 +196,15 @@ router.get("/company/:companyId/count", async (req: Request, res: Response) => {
 
     if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
 
-    const count = await ProductService.getProductCount(companyId as string);
+    const count = await InvoiceService.getInvoiceCount(companyId as string);
 
     return res.status(200).json({
       success: true,
       data: { count },
-      message: "Product count retrieved successfully",
+      message: "Invoice count retrieved successfully",
     });
   } catch (error) {
-    console.error("Error getting product count:", error);
+    console.error("Error getting invoice count:", error);
     return res.status(500).json({
       success: false,
       message: "Invalid",

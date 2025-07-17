@@ -1,9 +1,11 @@
-import Customer, { CustomerAttributes, CustomerType } from "./customer.model";
+import {
+  Customer,
+  CustomerAttributes,
+  CustomerType,
+} from "../config/associations";
 
-export class CustomerService {
-  static async getAllCustomersPerCompany(
-    companyId: string
-  ): Promise<Customer[]> {
+class CustomerService {
+  async getAllCustomersPerCompany(companyId: string): Promise<Customer[]> {
     return await Customer.findAll({
       where: {
         companyId,
@@ -13,11 +15,11 @@ export class CustomerService {
     });
   }
 
-  static async getCustomerById(id: string): Promise<Customer | null> {
+  async getCustomerById(id: string): Promise<Customer | null> {
     return await Customer.findByPk(id);
   }
 
-  static async createCustomer(customerData: {
+  async createCustomer(customerData: {
     companyId: string;
     type: CustomerType;
     name: string;
@@ -30,7 +32,7 @@ export class CustomerService {
     });
   }
 
-  static async updateCustomer(
+  async updateCustomer(
     id: string,
     updateData: Partial<CustomerAttributes>
   ): Promise<Customer | null> {
@@ -47,7 +49,7 @@ export class CustomerService {
     return customer;
   }
 
-  static async deleteCustomer(id: string): Promise<boolean> {
+  async deleteCustomer(id: string): Promise<boolean> {
     const customer = await Customer.findByPk(id);
     if (!customer) {
       return false;
@@ -60,7 +62,7 @@ export class CustomerService {
     return true;
   }
 
-  static async getCustomersByType(
+  async getCustomersByType(
     companyId: string,
     type: CustomerType
   ): Promise<Customer[]> {
@@ -74,7 +76,7 @@ export class CustomerService {
     });
   }
 
-  static async getCustomerCount(companyId: string): Promise<number> {
+  async getCustomerCount(companyId: string): Promise<number> {
     return await Customer.count({
       where: {
         companyId,
@@ -83,7 +85,7 @@ export class CustomerService {
     });
   }
 
-  static validateCustomerData(customerData: any): {
+  validateCustomerData(customerData: any): {
     isValid: boolean;
     errors: string[];
   } {
@@ -121,3 +123,5 @@ export class CustomerService {
     };
   }
 }
+
+export default new CustomerService();
