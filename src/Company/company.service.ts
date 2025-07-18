@@ -6,7 +6,6 @@ class CompanyService {
       const offset = (page - 1) * limit;
 
       const { count, rows } = await Company.findAndCountAll({
-        where: { deletedAt: null },
         limit,
         offset,
         order: [["createdAt", "DESC"]],
@@ -104,15 +103,10 @@ class CompanyService {
         throw new Error("Company not found");
       }
 
-      await company.update({
-        deletedAt: new Date(),
-        modifiedBy,
-        updatedAt: new Date(),
-      });
+      await company.destroy();
 
       return {
         message: "Company deleted successfully",
-        deletedAt: company.getDataValue("deletedAt"),
       };
     } catch (error) {
       console.error("Error deleting company:", error);

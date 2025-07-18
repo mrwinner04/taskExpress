@@ -19,8 +19,7 @@ export interface ProductAttributes {
 interface ProductCreationAttributes
   extends Optional<ProductAttributes, "id" | "createdAt" | "updatedAt"> {}
 
-class Product extends Model<ProductAttributes, ProductCreationAttributes> {
-}
+class Product extends Model<ProductAttributes, ProductCreationAttributes> {}
 
 Product.init(
   {

@@ -191,8 +191,6 @@ router.put("/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, code, price, type } = req.body;
 
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
-
     const product = await ProductService.updateProduct(id as string, {
       name,
       code,
@@ -224,8 +222,6 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
 
     const deleted = await ProductService.deleteProduct(id as string);
 

@@ -55,10 +55,6 @@ export const createOrderSchema = z.object({
   customerId: z.string().regex(uuidRegex, "Invalid customer ID format"),
   warehouseId: z.string().regex(uuidRegex, "Invalid warehouse ID format"),
   date: z.string().datetime("Invalid date format").or(z.date()).optional(),
-  totalAmount: z.coerce
-    .number()
-    .positive("Total amount must be positive")
-    .optional(),
 });
 
 export const updateOrderSchema = z.object({
@@ -74,10 +70,6 @@ export const updateOrderSchema = z.object({
   warehouseId: z
     .string()
     .regex(uuidRegex, "Invalid warehouse ID format")
-    .optional(),
-  totalAmount: z.coerce
-    .number()
-    .positive("Total amount must be positive")
     .optional(),
 });
 

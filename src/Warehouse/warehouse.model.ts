@@ -76,8 +76,8 @@ Warehouse.init(
     sequelize,
     modelName: "Warehouse",
     tableName: "warehouses",
-    timestamps: false,
-    paranoid: false,
+    timestamps: true,
+    paranoid: true,
   }
 );
 

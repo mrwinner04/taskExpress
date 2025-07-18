@@ -56,8 +56,8 @@ Company.init(
     sequelize,
     modelName: "Company",
     tableName: "companies",
-    timestamps: false,
-    paranoid: false,
+    timestamps: true,
+    paranoid: true,
   }
 );
 

@@ -5,7 +5,6 @@ class UserService {
     return await User.findAll({
       where: {
         companyId: companyId,
-        deletedAt: null,
       },
       order: [["name", "ASC"]],
     });
@@ -50,17 +49,17 @@ class UserService {
       return false;
     }
 
-    await user.update({
-      deletedAt: new Date(),
-    });
-
+    await user.destroy();
     return true;
   }
 
   async isEmailExists(email: string, excludeId?: string): Promise<boolean> {
+    if (!email || email.trim().length === 0) {
+      return false;
+    }
+
     const whereClause: any = {
-      email,
-      deletedAt: null,
+      email: email.trim(),
     };
 
     if (excludeId) {

@@ -62,20 +62,3 @@ export function finalErrorHandler(
     timestamp: new Date().toISOString(),
   });
 }
-
-export class AppError extends Error {
-  public statusCode: number;
-  public success: false = false;
-
-  constructor(message: string, statusCode: number = 500) {
-    super(message);
-    this.statusCode = statusCode;
-    this.name = "AppError";
-  }
-}
-
-export const asyncHandler = (fn: Function) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-};

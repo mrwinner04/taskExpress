@@ -8,7 +8,6 @@ import {
   updateOrderSchema,
 } from "../utility/zod.schemas";
 import { z } from "zod";
-import { NOW } from "sequelize";
 
 const router = Router();
 

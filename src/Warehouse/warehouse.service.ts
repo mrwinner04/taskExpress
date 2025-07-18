@@ -17,9 +17,6 @@ class WarehouseService {
     const offset = (page - 1) * limit;
 
     const { count, rows } = await Warehouse.findAndCountAll({
-      where: {
-        deletedAt: null,
-      },
       order: [["name", "ASC"]],
       limit,
       offset,
@@ -40,7 +37,6 @@ class WarehouseService {
     return await Warehouse.findAll({
       where: {
         companyId: companyId,
-        deletedAt: null,
       },
       order: [["name", "ASC"]],
     });
@@ -86,10 +82,7 @@ class WarehouseService {
       return false;
     }
 
-    await warehouse.update({
-      deletedAt: new Date(),
-    });
-
+    await warehouse.destroy();
     return true;
   }
 

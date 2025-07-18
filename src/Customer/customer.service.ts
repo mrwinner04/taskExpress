@@ -31,9 +31,6 @@ class CustomerService {
     const offset = (page - 1) * limit;
 
     const { count, rows } = await Customer.findAndCountAll({
-      where: {
-        deletedAt: null,
-      },
       order: [["name", "ASC"]],
       limit,
       offset,
@@ -54,7 +51,6 @@ class CustomerService {
     return await Customer.findAll({
       where: {
         companyId,
-        deletedAt: null,
       },
       order: [["name", "ASC"]],
     });
@@ -100,10 +96,7 @@ class CustomerService {
       return false;
     }
 
-    await customer.update({
-      deletedAt: new Date(),
-    });
-
+    await customer.destroy();
     return true;
   }
 
