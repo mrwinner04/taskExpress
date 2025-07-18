@@ -75,18 +75,15 @@ async function runAllSeeds() {
     console.error("❌ Seeding failed:", error);
     process.exit(1);
   } finally {
-    // Close database connection
     await sequelize.close();
   }
 }
 
-// Handle uncaught errors
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
   process.exit(1);
 });
 
-// Run the seeding process
 if (require.main === module) {
   runAllSeeds()
     .then(() => {

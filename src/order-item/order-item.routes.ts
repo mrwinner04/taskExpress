@@ -1,17 +1,17 @@
+// src/order/order-item.routes.ts
 import { Router, Request, Response } from "express";
-import WarehouseService from "./warehouse.service";
+import OrderItemService from "./order-item.service";
 import {
   validateRequest,
   paginationSchema,
+  createOrderItemSchema,
+  updateOrderItemSchema,
   uuidSchema,
-  createWarehouseSchema,
-  updateWarehouseSchema,
 } from "../utility/zod.schemas";
 import { z } from "zod";
 
 const router = Router();
 
-// Get all warehouses with pagination validation
 router.get(
   "/",
   validateRequest(paginationSchema, "query"),
@@ -19,13 +19,13 @@ router.get(
     try {
       const { page, limit } = req.query as any;
 
-      const result = await WarehouseService.getAllWarehouses(page, limit);
+      const result = await OrderItemService.getAllOrderItems(page, limit);
 
       return res.status(200).json({
         success: true,
-        data: result.warehouses,
+        data: result.orderItems,
         pagination: result.pagination,
-        message: "Warehouses retrieved successfully",
+        message: "Order items retrieved successfully",
       });
     } catch (error) {
       throw error;
@@ -33,21 +33,19 @@ router.get(
   }
 );
 
-// Get warehouses by company with UUID validation
 router.get(
-  "/company/:companyId",
-  validateRequest(z.object({ companyId: uuidSchema }), "params"),
+  "/order/:orderId",
+  validateRequest(z.object({ orderId: uuidSchema }), "params"),
   async (req: Request, res: Response) => {
     try {
-      const { companyId } = req.params as any;
+      const { orderId } = req.params as any;
 
-      const warehouses =
-        await WarehouseService.getAllWarehousesPerCompany(companyId);
+      const orderItems = await OrderItemService.getOrderItemsByOrder(orderId);
 
       return res.status(200).json({
         success: true,
-        data: warehouses,
-        message: "Warehouses retrieved successfully",
+        data: orderItems,
+        message: "Order items retrieved successfully",
       });
     } catch (error) {
       throw error;
@@ -55,7 +53,6 @@ router.get(
   }
 );
 
-// Get warehouse by ID with UUID validation
 router.get(
   "/:id",
   validateRequest(z.object({ id: uuidSchema }), "params"),
@@ -63,19 +60,19 @@ router.get(
     try {
       const { id } = req.params as any;
 
-      const warehouse = await WarehouseService.getWarehouseById(id);
+      const orderItem = await OrderItemService.getOrderItemById(id);
 
-      if (!warehouse) {
+      if (!orderItem) {
         return res.status(404).json({
           success: false,
-          message: "Warehouse not found",
+          message: "Order item not found",
         });
       }
 
       return res.status(200).json({
         success: true,
-        data: warehouse,
-        message: "Warehouse retrieved successfully",
+        data: orderItem,
+        message: "Order item retrieved successfully",
       });
     } catch (error) {
       throw error;
@@ -85,22 +82,23 @@ router.get(
 
 router.post(
   "/",
-  validateRequest(createWarehouseSchema),
+  validateRequest(createOrderItemSchema),
   async (req: Request, res: Response) => {
     try {
-      const { companyId, name, type, address } = req.body;
+      const { orderId, productId, quantity, price, modifiedBy } = req.body;
 
-      const warehouse = await WarehouseService.createWarehouse({
-        companyId,
-        name,
-        type,
-        address,
+      const orderItem = await OrderItemService.createOrderItem({
+        orderId,
+        productId,
+        quantity,
+        price,
+        modifiedBy,
       });
 
       return res.status(201).json({
         success: true,
-        data: warehouse,
-        message: "Warehouse created successfully",
+        data: orderItem,
+        message: "Order item created successfully",
       });
     } catch (error) {
       throw error;
@@ -111,29 +109,30 @@ router.post(
 router.put(
   "/:id",
   validateRequest(z.object({ id: uuidSchema }), "params"),
-  validateRequest(updateWarehouseSchema),
+  validateRequest(updateOrderItemSchema),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params as any;
-      const { name, type, address } = req.body;
+      const { productId, quantity, price, modifiedBy } = req.body;
 
-      const warehouse = await WarehouseService.updateWarehouse(id, {
-        name,
-        type,
-        address,
+      const orderItem = await OrderItemService.updateOrderItem(id, {
+        productId,
+        quantity,
+        price,
+        modifiedBy,
       });
 
-      if (!warehouse) {
+      if (!orderItem) {
         return res.status(404).json({
           success: false,
-          message: "Warehouse not found",
+          message: "Order item not found",
         });
       }
 
       return res.status(200).json({
         success: true,
-        data: warehouse,
-        message: "Warehouse updated successfully",
+        data: orderItem,
+        message: "Order item updated successfully",
       });
     } catch (error) {
       throw error;
@@ -148,18 +147,18 @@ router.delete(
     try {
       const { id } = req.params as any;
 
-      const deleted = await WarehouseService.deleteWarehouse(id);
+      const deleted = await OrderItemService.deleteOrderItem(id);
 
       if (!deleted) {
         return res.status(404).json({
           success: false,
-          message: "Warehouse not found",
+          message: "Order item not found",
         });
       }
 
       return res.status(204).json({
         success: true,
-        message: "Warehouse deleted successfully",
+        message: "Order item deleted successfully",
       });
     } catch (error) {
       throw error;

@@ -4,10 +4,8 @@ import Customer from "../customer/customer.model";
 import Product from "../product/product.model";
 import Warehouse from "../warehouse/warehouse.model";
 import Order from "../order/order.model";
-import OrderItem from "../order/order-item.model";
+import OrderItem from "../order-item/order-item.model";
 import Invoice from "../invoice/invoice.model";
-
-//kym baza danni
 
 const setupAssociations = () => {
   Company.hasMany(User, {
@@ -222,5 +220,5 @@ export type {
 export type { ProductAttributes, ProductType } from "../product/product.model";
 export type { WarehouseAttributes } from "../warehouse/warehouse.model";
 export type { OrderAttributes, OrderType } from "../order/order.model";
-export type { OrderItemAttributes } from "../order/order-item.model";
+export type { OrderItemAttributes } from "../order-item/order-item.model";
 export type { InvoiceAttributes } from "../invoice/invoice.model";

@@ -1,43 +1,46 @@
 import { Router, Request, Response } from "express";
 import ProductService from "./product.service";
-import { ValidationUtils, ValidationField } from "../utility/ValidationUtils";
+import {
+  validateRequest,
+  paginationSchema,
+  createProductSchema,
+  uuidSchema,
+} from "../utility/zod.schemas";
+import { ValidationUtils } from "../utility/validation.utils";
+import { z } from "zod";
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
-  try {
-    const { page = "1", limit = "10", companyId } = req.query;
+router.get(
+  "/",
+  validateRequest(paginationSchema, "query"),
+  async (req: Request, res: Response) => {
+    try {
+      const { page, limit, companyId } = req.query as any;
 
-    if (companyId) {
-      const products = await ProductService.getAllProductsPerCompany(
-        companyId as string
-      );
+      if (companyId) {
+        const products =
+          await ProductService.getAllProductsPerCompany(companyId);
+        return res.status(200).json({
+          success: true,
+          data: products,
+          message: "Products retrieved successfully",
+        });
+      }
+
+      const result = await ProductService.getAllProducts(page, limit);
+
       return res.status(200).json({
         success: true,
-        data: products,
+        data: result.products,
+        pagination: result.pagination,
         message: "Products retrieved successfully",
       });
+    } catch (error) {
+      throw error;
     }
-
-    const result = await ProductService.getAllProducts(
-      parseInt(page as string, 10),
-      parseInt(limit as string, 10)
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: result.products,
-      pagination: result.pagination,
-      message: "Products retrieved successfully",
-    });
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Invalid",
-    });
   }
-});
+);
 
 router.get("/analytics/best-selling", async (req: Request, res: Response) => {
   try {
@@ -87,18 +90,17 @@ router.get("/analytics/highest-stock", async (req: Request, res: Response) => {
 
 router.get(
   "/company/:companyId/type/:type",
+  validateRequest(
+    z.object({
+      companyId: uuidSchema,
+    }),
+    "params"
+  ),
   async (req: Request, res: Response) => {
     try {
-      const { companyId, type } = req.params;
+      const { companyId, type } = req.params as any;
 
-      if (!ValidationUtils.validateRequired(companyId, "Company ID", res))
-        return;
-      if (!ValidationUtils.validateRequired(type, "Type", res)) return;
-
-      const products = await ProductService.getProductsByType(
-        companyId as string,
-        type as "solid" | "liquid"
-      );
+      const products = await ProductService.getProductsByType(companyId, type);
 
       return res.status(200).json({
         success: true,
@@ -106,115 +108,83 @@ router.get(
         message: `Products with type '${type}' retrieved successfully`,
       });
     } catch (error) {
-      console.error("Error fetching products by type:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Invalid",
-      });
+      throw error;
     }
   }
 );
 
-router.get("/company/:companyId/count", async (req: Request, res: Response) => {
-  try {
-    const { companyId } = req.params;
+router.get(
+  "/company/:companyId/count",
+  validateRequest(z.object({ companyId: uuidSchema }), "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const { companyId } = req.params as any;
 
-    if (!ValidationUtils.validateRequired(companyId, "Company ID", res)) return;
+      const count = await ProductService.getProductCount(companyId);
 
-    const count = await ProductService.getProductCount(companyId as string);
-
-    return res.status(200).json({
-      success: true,
-      data: { count },
-      message: "Product count retrieved successfully",
-    });
-  } catch (error) {
-    console.error("Error getting product count:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Invalid",
-    });
-  }
-});
-
-router.get("/:id", async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!ValidationUtils.validateRequired(id, "Product ID", res)) return;
-
-    const product = await ProductService.getProductById(id as string);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Invalid",
+      return res.status(200).json({
+        success: true,
+        data: { count },
+        message: "Product count retrieved successfully",
       });
+    } catch (error) {
+      throw error;
     }
-
-    return res.status(200).json({
-      success: true,
-      data: product,
-      message: "Product retrieved successfully",
-    });
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Invalid",
-    });
   }
-});
+);
 
-router.post("/", async (req: Request, res: Response) => {
-  try {
-    const { companyId, name, code, price, type } = req.body;
+router.get(
+  "/:id",
+  validateRequest(z.object({ id: uuidSchema }), "params"),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params as any;
 
-    const validationFields: ValidationField[] = [
-      { value: companyId, fieldName: "Company ID" },
-      { value: name, fieldName: "Name" },
-      { value: code, fieldName: "Code" },
-      { value: price, fieldName: "Price" },
-    ];
+      const product = await ProductService.getProductById(id);
 
-    if (!ValidationUtils.validateRequiredFields(validationFields, res)) return;
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
 
-    const validation = ProductService.validateProductData({
-      companyId,
-      name,
-      code,
-      price: parseFloat(price),
-      type: type as "solid" | "liquid",
-    });
-
-    if (!validation.isValid) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
+      return res.status(200).json({
+        success: true,
+        data: product,
+        message: "Product retrieved successfully",
       });
+    } catch (error) {
+      throw error;
     }
-
-    const product = await ProductService.createProduct({
-      companyId,
-      name,
-      code,
-      price: parseFloat(price),
-      type: type as "solid" | "liquid",
-    });
-
-    return res.status(201).json({
-      success: true,
-      data: product,
-      message: "Product created successfully",
-    });
-  } catch (error) {
-    console.error("Error creating product:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Invalid",
-    });
   }
-});
+);
+
+router.post(
+  "/",
+  validateRequest(createProductSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { companyId, name, code, price, type, warehouseId } = req.body;
+
+      const product = await ProductService.createProduct({
+        companyId,
+        name,
+        code,
+        price,
+        type,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: product,
+        message: "Product created successfully",
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+);
 
 router.put("/:id", async (req: Request, res: Response) => {
   try {

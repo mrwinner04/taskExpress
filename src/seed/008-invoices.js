@@ -1,6 +1,5 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Check if invoices already exist
     const existingInvoices = await queryInterface.sequelize.query(
       "SELECT COUNT(*) as count FROM invoices;",
       { type: Sequelize.QueryTypes.SELECT }

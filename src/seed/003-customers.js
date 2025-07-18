@@ -11,7 +11,6 @@ module.exports = {
       return;
     }
 
-    // Create sample customers and suppliers for each company
     await queryInterface.bulkInsert("customers", [
       // TechCorp Solutions customers
       {

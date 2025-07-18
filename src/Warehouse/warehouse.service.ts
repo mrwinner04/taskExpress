@@ -2,8 +2,10 @@ import { Warehouse, WarehouseAttributes } from "../config/associations";
 import { ProductType } from "../product/product.model";
 
 class WarehouseService {
-  // Get all warehouses across all companies with pagination
-  async getAllWarehouses(page: number = 1, limit: number = 10): Promise<{
+  async getAllWarehouses(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
     warehouses: Warehouse[];
     pagination: {
       page: number;
@@ -13,7 +15,7 @@ class WarehouseService {
     };
   }> {
     const offset = (page - 1) * limit;
-    
+
     const { count, rows } = await Warehouse.findAndCountAll({
       where: {
         deletedAt: null,
@@ -89,29 +91,6 @@ class WarehouseService {
     });
 
     return true;
-  }
-
-  async getWarehousesByType(
-    companyId: string,
-    type: ProductType
-  ): Promise<Warehouse[]> {
-    return await Warehouse.findAll({
-      where: {
-        companyId: companyId,
-        type,
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  async getWarehouseCount(companyId: string): Promise<number> {
-    return await Warehouse.count({
-      where: {
-        companyId: companyId,
-        deletedAt: null,
-      },
-    });
   }
 
   validateWarehouseData(warehouseData: any): {

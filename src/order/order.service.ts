@@ -55,15 +55,20 @@ class OrderService {
     type: OrderType;
     customerId: string;
     warehouseId: string;
-    date: Date;
+    date?: Date;
   }): Promise<Order> {
     const orderNumber = this.generateOrderNumber();
+    const currentDate = new Date();
 
     return await Order.create({
-      ...orderData,
+      companyId: orderData.companyId,
+      type: orderData.type,
+      customerId: orderData.customerId,
+      warehouseId: orderData.warehouseId,
+      date: orderData.date || currentDate,
       number: orderNumber,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: currentDate,
+      updatedAt: currentDate,
     });
   }
 
@@ -97,46 +102,6 @@ class OrderService {
     return true;
   }
 
-  async getOrdersByType(companyId: string, type: OrderType): Promise<Order[]> {
-    return await Order.findAll({
-      where: {
-        companyId: companyId,
-        type,
-        deletedAt: null,
-      },
-      order: [["date", "DESC"]],
-    });
-  }
-
-  async getOrdersByCustomer(customerId: string): Promise<Order[]> {
-    return await Order.findAll({
-      where: {
-        customerId: customerId,
-        deletedAt: null,
-      },
-      order: [["date", "DESC"]],
-    });
-  }
-
-  async getOrdersByWarehouse(warehouseId: string): Promise<Order[]> {
-    return await Order.findAll({
-      where: {
-        warehouseId: warehouseId,
-        deletedAt: null,
-      },
-      order: [["date", "DESC"]],
-    });
-  }
-
-  async getOrderCount(companyId: string): Promise<number> {
-    return await Order.count({
-      where: {
-        companyId: companyId,
-        deletedAt: null,
-      },
-    });
-  }
-
   private generateOrderNumber(): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
@@ -168,10 +133,6 @@ class OrderService {
 
     if (!orderData.warehouseId) {
       errors.push("Warehouse ID is required");
-    }
-
-    if (!orderData.date) {
-      errors.push("Order date is required");
     }
 
     if (orderData.date && isNaN(Date.parse(orderData.date))) {

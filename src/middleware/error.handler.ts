@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
 
 export function errorHandler(
   err: any,
@@ -6,10 +7,75 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
-  console.error("Global Error Handler:", err);
+  console.error("Error Handler:", err);
 
-  res.status(500).json({
+  if (err instanceof ZodError) {
+    const errors = (err as any).errors.map((error: any) => ({
+      field: error.path.join("."),
+      message: error.message,
+    }));
+
+    return next({
+      success: false,
+      message: "Validation failed",
+      errors,
+      statusCode: 400,
+    });
+  }
+
+  if (
+    err.name === "SequelizeValidationError" ||
+    err.name === "SequelizeUniqueConstraintError"
+  ) {
+    const errors = err.errors.map((error: any) => ({
+      field: error.path,
+      message: error.message,
+    }));
+
+    return next({
+      success: false,
+      message: "Database validation failed",
+      errors,
+      statusCode: 400,
+    });
+  }
+
+  return next({
     success: false,
-    message: "Invalid",
+    message: err.message || "Internal server error",
+    statusCode: err.statusCode || 500,
   });
 }
+
+export function finalErrorHandler(
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  console.error("Final Error:", err);
+
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message,
+    errors: err.errors,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export class AppError extends Error {
+  public statusCode: number;
+  public success: false = false;
+
+  constructor(message: string, statusCode: number = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = "AppError";
+  }
+}
+
+export const asyncHandler = (fn: Function) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};

@@ -16,8 +16,10 @@ interface CustomerWithMostOrders {
 }
 
 class CustomerService {
-  // Get all customers across all companies with pagination
-  async getAllCustomers(page: number = 1, limit: number = 10): Promise<{
+  async getAllCustomers(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
     customers: Customer[];
     pagination: {
       page: number;
@@ -27,7 +29,7 @@ class CustomerService {
     };
   }> {
     const offset = (page - 1) * limit;
-    
+
     const { count, rows } = await Customer.findAndCountAll({
       where: {
         deletedAt: null,
@@ -103,29 +105,6 @@ class CustomerService {
     });
 
     return true;
-  }
-
-  async getCustomersByType(
-    companyId: string,
-    type: CustomerType
-  ): Promise<Customer[]> {
-    return await Customer.findAll({
-      where: {
-        companyId,
-        type,
-        deletedAt: null,
-      },
-      order: [["name", "ASC"]],
-    });
-  }
-
-  async getCustomerCount(companyId: string): Promise<number> {
-    return await Customer.count({
-      where: {
-        companyId,
-        deletedAt: null,
-      },
-    });
   }
 
   async getCustomersWithMostOrders(

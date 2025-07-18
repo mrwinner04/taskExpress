@@ -57,24 +57,6 @@ class UserService {
     return true;
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    return await User.findOne({
-      where: {
-        email,
-        deletedAt: null,
-      },
-    });
-  }
-
-  async getUserCount(companyId: string): Promise<number> {
-    return await User.count({
-      where: {
-        companyId: companyId,
-        deletedAt: null,
-      },
-    });
-  }
-
   async isEmailExists(email: string, excludeId?: string): Promise<boolean> {
     const whereClause: any = {
       email,

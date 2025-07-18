@@ -3,7 +3,7 @@ import mainRouter from "./route/mainRoutes";
 import { testConnection } from "./config/database";
 import sequelize from "./config/database";
 import "./config/associations";
-import { errorHandler } from "./middleware/error.handler";
+import { errorHandler, finalErrorHandler } from "./middleware/error.handler";
 
 const app: Application = express();
 
@@ -23,7 +23,9 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-app.use(errorHandler);
+// Error handling middleware - order matters!
+app.use(errorHandler); // First validation middleware
+app.use(finalErrorHandler); // Second validation middleware that sends the response
 
 const startServer = async (): Promise<void> => {
   try {
